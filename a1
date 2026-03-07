@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<title>ニュース接触タイプ診断</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+:root {
+  --bg: #f3f6fb;
+  --panel: #ffffff;
+  --text: #1f2937;
+  --sub: #6b7280;
+  --line: #dbe3ee;
+  --accent: #2563eb;
+  --accent-soft: #e8f0ff;
+  --card-bg: linear-gradient(135deg, #fffaf0 0%, #fff2c7 100%);
+  --card-line: #f0c419;
+  --shadow: 0 10px 30px rgba(0,0,0,.08);
+  --radius: 16px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans",
+    "Hiragino Kaku Gothic ProN", "Noto Sans JP", Meiryo, sans-serif;
+  background:
+    radial-gradient(circle at top right, #eef4ff 0%, transparent 30%),
+    linear-gradient(180deg, #f7f9fd 0%, #eef3f9 100%);
+  color: var(--text);
+  padding: 18px;
+  line-height: 1.7;
+}
+
+.container {
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 18px;
+  margin-bottom: 18px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+}
+
+.title {
+  font-weight: 800;
+  font-size: 24px;
+  line-height: 1.4;
+  margin-bottom: 8px;
+  letter-spacing: .01em;
+}
+
+.subtitle {
+  color: var(--sub);
+  font-size: 15px;
+}
+
+.progress-wrap {
+  margin-bottom: 14px;
+}
+
+.progress-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: var(--sub);
+}
+
+.progress-bar {
+  width: 100%;
+  height: 12px;
+  background: #e7edf6;
+  border-radius: 999px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,.06);
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #60a5fa 0%, #2563eb 100%);
+  transition: width .25s ease;
+}
+
+.q-title {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+
+.answers {
+  margin-top: 16px;
+}
+
+.answer-btn,
+.nav-btn,
+.share-btn,
+.retry-btn,
+.article-link {
+  border-radius: 14px;
+  transition: .2s ease;
+}
+
+.answer-btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  margin-bottom: 12px;
+  padding: 16px 16px;
+  border: 1px solid #d5dfec;
+  background: #fff;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--text);
+  box-shadow: 0 2px 8px rgba(0,0,0,.03);
+}
+
+.answer-btn:hover {
+  background: #f8fbff;
+  border-color: #8ab4ff;
+  transform: translateY(-1px);
+}
+
+.answer-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  min-width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 700;
+  margin-right: 10px;
+  vertical-align: top;
+}
+
+.nav-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.nav-btn,
+.share-btn,
+.retry-btn {
+  appearance: none;
+  border: none;
+  cursor: pointer;
+  padding: 13px 16px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.nav-btn.secondary,
+.retry-btn.secondary {
+  background: #eef2f7;
+  color: #334155;
+}
+
+.nav-btn.primary,
+.retry-btn.primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.nav-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.result-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--card-line);
+  background: var(--card-bg);
+  border-radius: 22px;
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+
+.result-card::before {
+  content: "";
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.35);
+}
+
+.result-card::after {
+  content: "";
+  position: absolute;
+  bottom: -50px;
+  left: -30px;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.18);
+}
+
+.result-badge {
+  position: relative;
+  z-index: 1;
+  display: inline-block;
+  background: rgba(255,255,255,.8);
+  color: #7c5a00;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 800;
+  margin-bottom: 12px;
+  border: 1px solid rgba(181, 137, 0, 0.15);
+  backdrop-filter: blur(6px);
+}
+
+.result-name {
+  position: relative;
+  z-index: 1;
+  font-size: 28px;
+  font-weight: 900;
+  line-height: 1.35;
+  color: #7a5800;
+  margin-bottom: 10px;
+}
+
+.result-desc {
+  position: relative;
+  z-index: 1;
+  font-size: 16px;
+  color: #4b5563;
+}
+
+.result-grid {
+  display: grid;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.info-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.03);
+}
+
+.info-title {
+  font-weight: 800;
+  font-size: 17px;
+  margin-bottom: 8px;
+}
+
+.advice-list {
+  margin: 0;
+  padding-left: 1.2em;
+  color: #374151;
+}
+
+.advice-list li + li {
+  margin-top: 8px;
+}
+
+.article-link {
+  display: block;
+  text-decoration: none;
+  background: #f8fbff;
+  border: 1px solid #d8e7ff;
+  color: #1d4ed8;
+  padding: 14px 15px;
+  font-weight: 700;
+}
+
+.article-link:hover {
+  background: #eef5ff;
+  transform: translateY(-1px);
+}
+
+.article-note {
+  color: var(--sub);
+  font-size: 13px;
+  margin-top: 8px;
+}
+
+.share-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.share-btn {
+  background: #111827;
+  color: #fff;
+}
+
+.share-btn:hover {
+  transform: translateY(-1px);
+}
+
+.share-btn.secondary {
+  background: #eef2f7;
+  color: #334155;
+}
+
+.small-note {
+  margin-top: 10px;
+  color: var(--sub);
+  font-size: 13px;
+}
+
+.hidden {
+  display: none !important;
+}
+
+@media (max-width: 640px) {
+  body {
+    padding: 12px;
+  }
+
+  .panel {
+    padding: 15px;
+    border-radius: 14px;
+  }
+
+  .title {
+    font-size: 21px;
+  }
+
+  .q-title {
+    font-size: 19px;
+  }
+
+  .answer-btn {
+    font-size: 15px;
+    padding: 14px 14px;
+  }
+
+  .nav-row {
+    flex-direction: column;
+  }
+
+  .nav-btn,
+  .retry-btn,
+  .share-btn {
+    width: 100%;
+  }
+
+  .result-name {
+    font-size: 24px;
+  }
+
+  .result-desc {
+    font-size: 15px;
+  }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="panel" id="intro">
+    <div class="title">5つの質問に答えて、あなたのニュースとの付き合い方をチェックしよう！</div>
+    <div class="subtitle">ニュースの取り方のタイプを、あなたの回答パターンから動物キャラクターで診断します。</div>
+  </div>
+
+  <div id="quiz"></div>
+
+  <div class="panel hidden" id="resultArea">
+    <div class="title">診断結果</div>
+
+    <div id="resultCard" class="result-card"></div>
+
+    <div class="result-grid">
+      <div class="info-card">
+        <div class="info-title">あなたへのアドバイス</div>
+        <ul id="adviceList" class="advice-list"></ul>
+      </div>
+
+      <div class="info-card">
+        <div class="info-title">おすすめ記事</div>
+        <a id="articleLink" class="article-link" href="#" target="_blank" rel="noopener noreferrer"></a>
+        <div id="articleNote" class="article-note"></div>
+      </div>
+    </div>
+
+    <div class="share-row">
+      <button class="share-btn" id="shareXBtn" type="button">Xでシェアする</button>
+      <button class="share-btn secondary" id="copyResultBtn" type="button">結果文をコピー</button>
+    </div>
+
+    <div class="small-note">※ シェア文には診断結果と診断ページURLが入ります。</div>
+
+    <div class="nav-row">
+      <button class="retry-btn secondary" id="restartBtn" type="button">もう一度診断する</button>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const QUESTIONS = [
+    {
+      text: "Q1. 新しいニュースを知るとき、あなたのスタイルに近いのは？",
+      answers: [
+        "自分でキーワード検索したり、ニュースアプリを巡回する",
+        "SNSのタイムラインや、友達からのシェアで自然と知る"
+      ]
+    },
+    {
+      text: "Q2. あなたがよく見るニュースのジャンルは？",
+      answers: [
+        "政治経済からエンタメ、スポーツまで幅広くチェックする",
+        "好きなアイドルや趣味、特定の社会問題など、関心事が中心"
+      ]
+    },
+    {
+      text: "Q3. 衝撃的なニュースを見たとき、あなたの最後の反応は？",
+      answers: [
+        "「これは本当？」「他のメディアではどう報じている？」と事実関係が気になる",
+        "「すごい！」「ありえない！」と、まず感情的に反応する"
+      ]
+    },
+    {
+      text: "Q4. 面白い記事や動画を見つけたら、どうすることが多い？",
+      answers: [
+        "SNSでシェアしたり、友達に「これ見て！」とすぐ教える",
+        "自分の中で楽しんで、特に誰かに言うことは少ない"
+      ]
+    },
+    {
+      text: "Q5. 情報源について、あなたの考えに近いのは？",
+      answers: [
+        "複数のメディアや専門家の意見を比較して、多角的に判断したい",
+        "信頼している特定のメディアやインフルエンサーがいれば十分"
+      ]
+    }
+  ];
+
+  const ANIMAL_TYPES = {
+    "11111": {name: "🦅 博識のジャーナリスト・ワシ", description: "空から世界を見渡すように、広く深く情報を集め、分析し、発信するリーダー。あなたの発言は多くの人に影響を与えるでしょう。"},
+    "11112": {name: "🐬 情報司令塔・イルカ", description: "広い海の情報を集め、仲間と共有するのが得意。分析力と発信力を兼ね備え、コミュニティの中心で活躍する人気者です。"},
+    "11121": {name: "🦉 知の探求者・フクロウ", description: "幅広い知識を冷静に分析し、自分の内なる知恵として蓄える賢者。物事の本質を見抜く力を持っています。"},
+    "11122": {name: "🦫 情報収集家・ビーバー", description: "コツコツと広範囲から情報を集め、自分の知識のダムを築く努力家。その知識は、いつか大きな価値を生み出します。"},
+    "11211": {name: "🦜 お祭り好きの評論家・オウム", description: "世の中の話題を広く集め、感情豊かに分析し、周りに広めるのが好き。場を盛り上げるムードメーカーです。"},
+    "11212": {name: "🦊 トレンドウォッチャー・キツネ", description: "世の中の流行に敏感で、面白そうと思った情報をキャッチしては、すぐさま周りにシェア。機転が利き、いつも話題の中心にいます。"},
+    "11221": {name: "🐈 内なる批評家・ネコ", description: "世の中の出来事を幅広く眺め、自分の中で「好きか嫌いか」を判断する自由人。気分が乗らないことには関心を示しません。"},
+    "11222": {name: "🦦 世間を眺めるカピバラ", description: "流れてくる情報をぼんやりと眺め、世の中の雰囲気を感じ取る平和主義者。のんびり情報浴を楽しんでいます。"},
+    "12111": {name: "🐝 一点突破の伝道師・ミツバチ", description: "特定分野の蜜（情報）を深く集め、分析し、仲間に正確に伝える伝達のプロ。あなたの専門知識はコミュニティの宝です。"},
+    "12112": {name: "🦦 トレンドハンター・ミーアキャット", description: "自分の好きな分野の最新情報を誰よりも早くキャッチ！分析と共有が得意な、生まれついてのトレンドセッターです。"},
+    "12121": {name: "🐙 孤高の研究者・タコ", description: "深い海の底で、興味のあることをとことん分析・探求するインテリ。その思考の深さは誰にも真似できません。"},
+    "12122": {name: "鼹 専門知識コレクター・モグラ", description: "一度気になったテーマを深く掘り下げる研究者タイプ。自分の知的好奇心に忠実で、専門家レベルの知識を蓄えます。"},
+    "12211": {name: "🐧 推し活応援団長・ペンギン", description: "自分の「好き」を深く追求し、その魅力を感情豊かに分析して世界に発信！愛と情熱で周りを巻き込むリーダーです。"},
+    "12212": {name: "🦜 ゴシップ好きのインコ", description: "特定のコミュニティの噂話や最新ニュースが大好き！見つけた情報をすぐに仲間に広めて楽しむ、おしゃべり上手な人気者。"},
+    "12221": {name: "🦙 趣味に生きるアルパカ", description: "自分の好きな世界にどっぷり浸かり、マイペースに情報を楽しむタイプ。他人の評価は気にせず、自分の「好き」を大切にします。"},
+    "12222": {name: "クラゲ", description: "自分の好きな情報だけが漂う心地よい空間（沼）で、ゆらゆらと過ごすのが至福の時。外界にはあまり興味がありません。"},
+    "21111": {name: "🐘 博愛のコメンテーター・ゾウ", description: "流れてくる幅広い情報に対し、冷静かつ愛情深い視点でコメントを発信する穏やかな巨人。あなたの言葉は多くの人を安心させます。"},
+    "21112": {name: "🐕 社交的な情報通・イヌ", description: "人から聞いた情報を元に、自分でも確かめて周りに教えるのが得意。フレンドリーで信頼されるコミュニティのハブ的存在。"},
+    "21121": {name: "🐢 物静かな博学者・リクガメ", description: "受け取った幅広い情報を、時間をかけてじっくり自分の中で分析する賢者。長年の経験に裏打ちされた深い洞察力を持っています。"},
+    "21122": {name: "🐑 知識の聞き上手・ヒツジ", description: "周りから入ってくる様々な情報を、穏やかに受け止める聞き上手。平和を愛し、知識を静かに蓄えます。"},
+    "21211": {name: "🐼 共感系インフルエンサー・パンダ", description: "世の中の話題に感情豊かに反応し、その気持ちをシェアすることで多くの共感を集める人気者。あなたの言葉は人を癒します。"},
+    "21212": {name: "🐦 うわさ話好きのスズメ", description: "あちこちから聞こえてくる情報をキャッチしては、仲間と共有するのが大好き。にぎやかな場所を好むコミュニケーターです。"},
+    "21221": {name: "🦦 人間観察好きのフェレット", description: "世の中の様々な出来事を「面白いなぁ」と眺め、自分の中で楽しむ観察者。好奇心旺盛ですが、あまり表には出しません。"},
+    "21222": {name: "🦥 のんびり屋のナマケモノ", description: "ただただ流れてくる情報を眺めているだけで満足。自分で動くのは少し面倒だけど、世の中のことはなんとなく知っています。"},
+    "22111": {name: "🦘 専門分野の解説者・カンガルー", description: "人から聞いた特定分野の情報を、自分なりに分析して分かりやすく発信。面倒見がよく、後輩から頼りにされる存在です。"},
+    "22112": {name: "🐇 オタ友と語り合うウサギ", description: "信頼する仲間から得た推しの情報を、さらに分析して語り合うのが大好き。寂しがり屋だけど、好きなことへの熱量は本物です。"},
+    "22121": {name: "🕷️ 物静かな職人・クモ", description: "限られた情報から、静かに思考を張り巡らせ、自分だけの完璧な知識の巣を作り上げる職人肌。邪魔されるのを嫌います。"},
+    "22122": {name: "🐚 秘めたるオタク・貝", description: "自分の殻の中に、好きなものに関する膨大な知識を秘めているタイプ。普段は物静かですが、一度口を開くと止まりません。"},
+    "22211": {name: "🕊️ 愛を叫ぶ伝書鳩", description: "仲間から聞いた推しの尊さを、感情のままに世界へ発信する愛の伝道師。「好き」を共有できることに喜びを感じます。"},
+    "22212": {name: "🦝 井戸端会議のリーダー・アライグマ", description: "仲間内で共有された情報を元に、ワイワイおしゃべりするのが大好き。コミュニティを盛り上げる中心人物です。"},
+    "22221": {name: "🦦 マイペースな夢見るラッコ", description: "好きな情報だけを、好きなときに、好きなだけ楽しむ自由人。自分の心地よい世界で、幸せに暮らしています。"},
+    "22222": {name: "シーラカンス", description: "ごく限られた情報源からしか情報を受け取らず、自分の世界に深く閉じこもる孤高の存在。外界の喧騒には興味がありません。"}
+  };
+
+  const defaultType = {
+    name: "❓ ミステリアスな存在",
+    description: "あなたは規格外のユニークな存在です！"
+  };
+
+  const ARTICLE_BY_CATEGORY = {
+    balanced: {
+      title: "複数の情報源を見比べるときに意識したい、ニュースの読み方入門",
+      url: "https://www.asahi.com/",
+      note: "幅広く情報を見たい人向け。読み比べのコツを意識すると、判断の質が上がりやすくなります。"
+    },
+    social: {
+      title: "SNS時代に流れてくる情報と上手につきあうためのヒント",
+      url: "https://www.asahi.com/",
+      note: "流れてくる情報を拾うのが得意な人向け。早さだけでなく、確からしさも押さえるのがコツです。"
+    },
+    focused: {
+      title: "好きなテーマを深掘りするときの、偏りを減らす情報収集術",
+      url: "https://www.asahi.com/",
+      note: "関心分野を深く追う人向け。専門性を保ちつつ、視野を広げる工夫が役立ちます。"
+    },
+    emotional: {
+      title: "強い感情を動かされたニュースに出会ったときの立ち止まり方",
+      url: "https://www.asahi.com/",
+      note: "共感力や反応の速さが強みの人向け。一呼吸おいて確認する習慣が効きます。"
+    }
+  };
+
+  let currentQuestionIndex = 0;
+  let selectedAnswers = [];
+
+  const quizDiv = document.getElementById("quiz");
+  const resultArea = document.getElementById("resultArea");
+  const resultCard = document.getElementById("resultCard");
+  const adviceList = document.getElementById("adviceList");
+  const articleLink = document.getElementById("articleLink");
+  const articleNote = document.getElementById("articleNote");
+  const shareXBtn = document.getElementById("shareXBtn");
+  const copyResultBtn = document.getElementById("copyResultBtn");
+  const restartBtn = document.getElementById("restartBtn");
+
+  function getAnswerValue(index) {
+    return selectedAnswers[index] || null;
+  }
+
+  function buildAdvice() {
+    const q1 = getAnswerValue(0);
+    const q2 = getAnswerValue(1);
+    const q3 = getAnswerValue(2);
+    const q4 = getAnswerValue(3);
+    const q5 = getAnswerValue(4);
+
+    const tips = [];
+
+    if (q1 === "2") {
+      tips.push("SNSやシェア経由で情報に出会いやすいタイプです。気になった話題ほど、元の発信源や一次情報を1回だけでも確認する習慣をつけると、精度がぐっと上がります。");
+    } else {
+      tips.push("自分で情報を取りに行けるのが強みです。検索や巡回先が固定化しやすいので、たまに違う立場や異なる媒体ものぞくと視野がさらに広がります。");
+    }
+
+    if (q2 === "2") {
+      tips.push("関心分野への集中力が高いタイプです。好きなテーマの周辺分野も少しだけ触れると、推しや趣味のニュースの見え方がいっそう立体的になります。");
+    } else {
+      tips.push("幅広く情報を追えるタイプです。量が多くなりやすいので、『毎日ここだけは見る』という軸媒体を決めると疲れにくくなります。");
+    }
+
+    if (q3 === "2") {
+      tips.push("感情が先に動くのは自然なことです。驚いた話題ほど、シェアや判断の前に『日付』『出典』『他媒体の扱い』の3点だけ確認すると安心です。");
+    } else {
+      tips.push("事実確認をしようとする姿勢が大きな強みです。確認に時間をかけすぎて疲れたら、『この件は今は保留』と決めるのも大事です。");
+    }
+
+    if (q4 === "1") {
+      tips.push("情報を人に届ける力があります。シェア前に短く一言『出典はここ』『まだ速報段階』のような注釈を添えると、さらに信頼されやすくなります。");
+    } else {
+      tips.push("自分の中で消化できる落ち着きがあります。たまに『これは誰かに共有する価値があるか』と考えると、良い情報の循環が生まれます。");
+    }
+
+    if (q5 === "2") {
+      tips.push("信頼できる情報源を持つのは強みです。ただし、重要なテーマほど1つだけに頼らず、違う角度の説明を1本だけ足すと判断の偏りを減らせます。");
+    } else {
+      tips.push("比較しながら考える姿勢がとても健全です。毎回すべてを見比べるのは大変なので、『重い話題だけ複数確認』など自分ルールを作ると続けやすいです。");
+    }
+
+    return tips;
+  }
+
+  function getArticleData() {
+    const q1 = getAnswerValue(0);
+    const q2 = getAnswerValue(1);
+    const q3 = getAnswerValue(2);
+    const q5 = getAnswerValue(4);
+
+    if (q3 === "2") return ARTICLE_BY_CATEGORY.emotional;
+    if (q2 === "2") return ARTICLE_BY_CATEGORY.focused;
+    if (q1 === "2") return ARTICLE_BY_CATEGORY.social;
+    if (q5 === "1") return ARTICLE_BY_CATEGORY.balanced;
+
+    return ARTICLE_BY_CATEGORY.balanced;
+  }
+
+  function getShareText(result) {
+    return `ニュース接触タイプ診断の結果は「${result.name}」でした！\n${result.description}\n#ニュース接触タイプ診断`;
+  }
+
+  function renderCurrentQuestion() {
+    resultArea.classList.add("hidden");
+    quizDiv.innerHTML = "";
+
+    if (currentQuestionIndex >= QUESTIONS.length) {
+      showResult();
+      return;
+    }
+
+    const q = QUESTIONS[currentQuestionIndex];
+    const answeredCount = currentQuestionIndex;
+    const progressPercent = (answeredCount / QUESTIONS.length) * 100;
+
+    const panel = document.createElement("div");
+    panel.className = "panel";
+
+    const progressWrap = document.createElement("div");
+    progressWrap.className = "progress-wrap";
+    progressWrap.innerHTML = `
+      <div class="progress-top">
+        <span>進捗</span>
+        <span>${currentQuestionIndex + 1} / ${QUESTIONS.length}</span>
+      </div>
+      <div class="progress-bar" aria-hidden="true">
+        <div class="progress-fill" style="width: ${progressPercent}%;"></div>
+      </div>
+    `;
+
+    const title = document.createElement("div");
+    title.className = "q-title";
+    title.textContent = q.text;
+
+    const answers = document.createElement("div");
+    answers.className = "answers";
+
+    q.answers.forEach((ans, i) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "answer-btn";
+      btn.innerHTML = `<span class="answer-num">${i + 1}</span>${ans}`;
+      btn.addEventListener("click", () => {
+        selectedAnswers[currentQuestionIndex] = String(i + 1);
+        currentQuestionIndex++;
+        renderCurrentQuestion();
+      });
+      answers.appendChild(btn);
+    });
+
+    const navRow = document.createElement("div");
+    navRow.className = "nav-row";
+
+    const backBtn = document.createElement("button");
+    backBtn.type = "button";
+    backBtn.className = "nav-btn secondary";
+    backBtn.textContent = "戻る";
+    backBtn.disabled = currentQuestionIndex === 0;
+    backBtn.addEventListener("click", () => {
+      if (currentQuestionIndex > 0) {
+        currentQuestionIndex--;
+        renderCurrentQuestion();
+      }
+    });
+
+    navRow.appendChild(backBtn);
+
+    panel.appendChild(progressWrap);
+    panel.appendChild(title);
+    panel.appendChild(answers);
+    panel.appendChild(navRow);
+    quizDiv.appendChild(panel);
+  }
+
+  function showResult() {
+    const key = selectedAnswers.join("");
+    const finalType = ANIMAL_TYPES[key] || defaultType;
+    const adviceItems = buildAdvice();
+    const article = getArticleData();
+
+    quizDiv.innerHTML = "";
+
+    resultCard.innerHTML = `
+      <div class="result-badge">診断完了</div>
+      <div class="result-name">${finalType.name}</div>
+      <div class="result-desc">${finalType.description}</div>
+    `;
+
+    adviceList.innerHTML = "";
+    adviceItems.forEach((tip) => {
+      const li = document.createElement("li");
+      li.textContent = tip;
+      adviceList.appendChild(li);
+    });
+
+    articleLink.textContent = `👉 ${article.title}`;
+    articleLink.href = article.url;
+    articleNote.textContent = article.note;
+
+    shareXBtn.onclick = () => {
+      const shareText = getShareText(finalType);
+      const shareUrl = window.location.href;
+      const xUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
+      window.open(xUrl, "_blank", "noopener,noreferrer");
+    };
+
+    copyResultBtn.onclick = async () => {
+      const text = `${getShareText(finalType)}\n${window.location.href}`;
+      try {
+        await navigator.clipboard.writeText(text);
+        copyResultBtn.textContent = "コピーしました";
+        setTimeout(() => {
+          copyResultBtn.textContent = "結果文をコピー";
+        }, 1600);
+      } catch (e) {
+        alert("コピーに失敗しました。");
+      }
+    };
+
+    resultArea.classList.remove("hidden");
+    resultArea.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  restartBtn.addEventListener("click", () => {
+    currentQuestionIndex = 0;
+    selectedAnswers = [];
+    resultArea.classList.add("hidden");
+    renderCurrentQuestion();
+  });
+
+  renderCurrentQuestion();
+});
+</script>
+</body>
+</html>
